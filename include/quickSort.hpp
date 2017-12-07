@@ -43,8 +43,8 @@ template <typename BidirectionalIterator>
 parallel_quick_sorter_t<BidirectionalIterator>::
 ~parallel_quick_sorter_t()
 {
-	end_of_data_ = true;// устанавливает флаг об окочании данных
-	for (auto && thread : threads_)// ожидает завершения потоков из пула
+	end_of_data_ = true;// ГіГ±ГІГ Г­Г ГўГ«ГЁГўГ ГҐГІ ГґГ«Г ГЈ Г®ГЎ Г®ГЄГ®Г·Г Г­ГЁГЁ Г¤Г Г­Г­Г»Гµ
+	for (auto && thread : threads_)// Г®Г¦ГЁГ¤Г ГҐГІ Г§Г ГўГҐГ°ГёГҐГ­ГЁГї ГЇГ®ГІГ®ГЄГ®Гў ГЁГ§ ГЇГіГ«Г 
 		threads_.join();
 }
 
@@ -55,18 +55,18 @@ do_sort(BidirectionalIterator first, BidirectionalIterator last)
 	if (first == last) 
 		return;
 
-	// разбивает на порцию данных на две
+	// Г°Г Г§ГЎГЁГўГ ГҐГІ Г­Г  ГЇГ®Г°Г¶ГЁГѕ Г¤Г Г­Г­Г»Гµ Г­Г  Г¤ГўГҐ
 	auto pivot = partition(first, last); 
-	// первую часть закидывает в стек задач
+	// ГЇГҐГ°ГўГіГѕ Г·Г Г±ГІГј Г§Г ГЄГЁГ¤Г»ГўГ ГҐГІ Гў Г±ГІГҐГЄ Г§Г Г¤Г Г·
 	auto first_chunk = std::make_shared<chunk_to_sort_t>(chunk_to_sort_t(first, pivot));
 	auto first_task = first_chunk->promise.get_future();
 	chunks_.push(first_chunk);
-	// вторую часть сортирует сам
+	// ГўГІГ®Г°ГіГѕ Г·Г Г±ГІГј Г±Г®Г°ГІГЁГ°ГіГҐГІ Г±Г Г¬
 	do_sort(pivot, last);
 
-	// в цикле проверяет отсортировалась ли первая часть
+	// Гў Г¶ГЁГЄГ«ГҐ ГЇГ°Г®ГўГҐГ°ГїГҐГІ Г®ГІГ±Г®Г°ГІГЁГ°Г®ГўГ Г«Г Г±Гј Г«ГЁ ГЇГҐГ°ГўГ Гї Г·Г Г±ГІГј
 	while (first_task.wait_for(std::chrono::milliseconds(0)) != std::future_status::ready)
-		// если нет, то берет порцию данных из стека задач, и сортирует её
+		// ГҐГ±Г«ГЁ Г­ГҐГІ, ГІГ® ГЎГҐГ°ГҐГІ ГЇГ®Г°Г¶ГЁГѕ Г¤Г Г­Г­Г»Гµ ГЁГ§ Г±ГІГҐГЄГ  Г§Г Г¤Г Г·, ГЁ Г±Г®Г°ГІГЁГ°ГіГҐГІ ГҐВё
 		sort_thread();
 }
 
@@ -74,7 +74,7 @@ template <typename BidirectionalIterator>
 void parallel_quick_sorter_t<BidirectionalIterator>::
 try_sort_chunk()
 {
-	// сортирует порцию данных, если она есть
+	// Г±Г®Г°ГІГЁГ°ГіГҐГІ ГЇГ®Г°Г¶ГЁГѕ Г¤Г Г­Г­Г»Гµ, ГҐГ±Г«ГЁ Г®Г­Г  ГҐГ±ГІГј
 	auto chunk = chunks_.pop();
 	if (chunk)
 		sort_chunk(*chunk);
@@ -84,13 +84,13 @@ template <typename BidirectionalIterator>
 void parallel_quick_sorter_t<BidirectionalIterator>::
 sort_thread()
 {
-	while (!end_of_data_)// в цикле берет порцию данных из стека задач, и сортирует её
+	while (!end_of_data_)// Гў Г¶ГЁГЄГ«ГҐ ГЎГҐГ°ГҐГІ ГЇГ®Г°Г¶ГЁГѕ Г¤Г Г­Г­Г»Гµ ГЁГ§ Г±ГІГҐГЄГ  Г§Г Г¤Г Г·, ГЁ Г±Г®Г°ГІГЁГ°ГіГҐГІ ГҐВё
 	{
 		try_sort_chunk;
 		std::this_thread::yield();
 	}
-	// при этом на каждой итерации возвращает управление системе
-	// чтобы та могла дать возможность поработать другим потока
+	// ГЇГ°ГЁ ГЅГІГ®Г¬ Г­Г  ГЄГ Г¦Г¤Г®Г© ГЁГІГҐГ°Г Г¶ГЁГЁ ГўГ®Г§ГўГ°Г Г№Г ГҐГІ ГіГЇГ°Г ГўГ«ГҐГ­ГЁГҐ Г±ГЁГ±ГІГҐГ¬ГҐ
+	// Г·ГІГ®ГЎГ» ГІГ  Г¬Г®ГЈГ«Г  Г¤Г ГІГј ГўГ®Г§Г¬Г®Г¦Г­Г®Г±ГІГј ГЇГ®Г°Г ГЎГ®ГІГ ГІГј Г¤Г°ГіГЈГЁГ¬ ГЇГ®ГІГ®ГЄГ 
 }
 
 template <typename BidirectionalIterator>
