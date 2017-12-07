@@ -11,10 +11,23 @@ HunterGate(
 
 project(demo)
 
-hunter_add_package(stack_05)
-find_package(stack_05)
+option(BUILD_EXAMPLES "Build Examples" OFF)
 
-add_executable(demo ${CMAKE_CURRENT_SOURCE_DIR}/sources/demo.cpp)
-target_link_libraries(demo stack_05)
+add_library(${PROJECT_NAME} INTERFACE)
+target_sources(${PROJECT_NAME} INTERFACE "${PROJECT_SOURCE_DIR}/include/quickSort.hpp")
 
-install(TARGETS demo RUNTIME DESTINATION bin)
+target_include_directories(${PROJECT_NAME} INTERFACE "${PROJECT_SOURCE_DIR}/include")
+
+if(BUILD_EXAMPLES)
+    file(GLOB EXAMPLE_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/examples/*.cpp")
+    foreach(EXAMPLE_SOURCE ${EXAMPLE_SOURCES})
+        get_filename_component(EXAMPLE_NAME ${EXAMPLE_SOURCE} NAME_WE)
+        set(EXAMPLE_TARGET_NAME example_${EXAMPLE_NAME})
+        add_executable(${EXAMPLE_TARGET_NAME} ${EXAMPLE_SOURCE})
+        target_link_libraries(${EXAMPLE_TARGET_NAME} ${PROJECT_NAME})
+        set_target_properties(${EXAMPLE_TARGET_NAME} PROPERTIES OUTPUT_NAME ${EXAMPLE_NAME})
+        install(TARGETS ${EXAMPLE_TARGET_NAME}
+                RUNTIME DESTINATION bin
+                )
+    endforeach(EXAMPLE_SOURCE ${EXAMPLE_SOURCES})
+endif()
