@@ -43,8 +43,8 @@ template <typename BidirectionalIterator>
 parallel_quick_sorter_t<BidirectionalIterator>::
 ~parallel_quick_sorter_t()
 {
-	end_of_data_ = true;// óñòàíàâëèâàåò ôëàã îá îêî÷àíèè äàííûõ
-	for (auto && thread : threads_)// îæèäàåò çàâåðøåíèÿ ïîòîêîâ èç ïóëà
+	end_of_data_ = true;
+	for (auto && thread : threads_)
 		threads_.join();
 }
 
@@ -55,18 +55,17 @@ do_sort(BidirectionalIterator first, BidirectionalIterator last)
 	if (first == last) 
 		return;
 
-	// ðàçáèâàåò íà ïîðöèþ äàííûõ íà äâå
 	auto pivot = partition(first, last); 
-	// ïåðâóþ ÷àñòü çàêèäûâàåò â ñòåê çàäà÷
 	auto first_chunk = std::make_shared<chunk_to_sort_t>(chunk_to_sort_t(first, pivot));
 	auto first_task = first_chunk->promise.get_future();
 	chunks_.push(first_chunk);
-	// âòîðóþ ÷àñòü ñîðòèðóåò ñàì
+	
+	if (threads_.size() < max_threads_count_)
+        	threads_.push_back(std::thread{ &parallel_quick_sorter_t<BidirectionalIterator>::sort_thread, this });
+	
 	do_sort(pivot, last);
 
-	// â öèêëå ïðîâåðÿåò îòñîðòèðîâàëàñü ëè ïåðâàÿ ÷àñòü
 	while (first_task.wait_for(std::chrono::milliseconds(0)) != std::future_status::ready)
-		// åñëè íåò, òî áåðåò ïîðöèþ äàííûõ èç ñòåêà çàäà÷, è ñîðòèðóåò å¸
 		sort_thread();
 }
 
@@ -74,7 +73,6 @@ template <typename BidirectionalIterator>
 void parallel_quick_sorter_t<BidirectionalIterator>::
 try_sort_chunk()
 {
-	// ñîðòèðóåò ïîðöèþ äàííûõ, åñëè îíà åñòü
 	auto chunk = chunks_.pop();
 	if (chunk)
 		sort_chunk(*chunk);
@@ -84,13 +82,11 @@ template <typename BidirectionalIterator>
 void parallel_quick_sorter_t<BidirectionalIterator>::
 sort_thread()
 {
-	while (!end_of_data_)// â öèêëå áåðåò ïîðöèþ äàííûõ èç ñòåêà çàäà÷, è ñîðòèðóåò å¸
+	while (!end_of_data_)
 	{
 		try_sort_chunk;
 		std::this_thread::yield();
 	}
-	// ïðè ýòîì íà êàæäîé èòåðàöèè âîçâðàùàåò óïðàâëåíèå ñèñòåìå
-	// ÷òîáû òà ìîãëà äàòü âîçìîæíîñòü ïîðàáîòàòü äðóãèì ïîòîêà
 }
 
 template <typename BidirectionalIterator>
