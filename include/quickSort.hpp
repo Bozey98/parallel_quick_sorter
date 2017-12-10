@@ -45,7 +45,7 @@ parallel_quick_sorter_t<BidirectionalIterator>::
 {
 	end_of_data_ = true;
 	for (auto && thread : threads_)
-		threads_.join();
+		thread.join();
 }
 
 template <typename BidirectionalIterator>
