@@ -66,7 +66,7 @@ do_sort(BidirectionalIterator first, BidirectionalIterator last)
 	do_sort(pivot, last);
 
 	while (first_task.wait_for(std::chrono::milliseconds(0)) != std::future_status::ready)
-		sort_thread();
+	        try_sort_chunk();
 }
 
 template <typename BidirectionalIterator>
